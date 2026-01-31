@@ -1,7 +1,23 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from ..database import get_db
+from ..analytics import median_rent_for_region
 
 router = APIRouter()
 
 @router.get("/")
 def analytics_root():
-    return {"message": "Analytics endpoints coming soon"}
+    return {"message": "Analytics endpoints"}
+
+@router.get("/regions/{region_id}/median-rent")
+def get_median_rent(region_id: int, db: Session = Depends(get_db)):
+    median = median_rent_for_region(db, region_id)
+    if median is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No rent data available for this region"
+        )
+    return {
+        "region_id": region_id,
+        "median_rent": median
+    }
