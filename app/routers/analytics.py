@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..analytics import median_rent_for_region
-
+from ..analytics import affordability_for_region
 router = APIRouter()
 
 @router.get("/")
@@ -21,3 +21,15 @@ def get_median_rent(region_id: int, db: Session = Depends(get_db)):
         "region_id": region_id,
         "median_rent": median
     }
+
+
+@router.get("/regions/{region_id}/affordability")
+def get_affordability(region_id: int, db: Session = Depends(get_db)):
+    result = affordability_for_region(db, region_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Insufficient data to compute affordability"
+        )
+    return result
+
