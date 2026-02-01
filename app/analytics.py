@@ -51,3 +51,17 @@ def affordability_for_region(db: Session, region_id: int):
         "classification": classification
     }
 
+def affordability_rankings(db: Session):
+    regions = db.query(models.Region).all()
+    rankings = []
+
+    for region in regions:
+        result = affordability_for_region(db, region.id)
+        if result:
+            rankings.append(result)
+
+    # sort by affordability_index (lower = more affordable)
+    rankings.sort(key=lambda x: x["affordability_index"])
+    return rankings
+
+
