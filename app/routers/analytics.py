@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..analytics import median_rent_for_region
 from ..analytics import affordability_for_region
+from ..analytics import affordability_rankings
 router = APIRouter()
 
 @router.get("/")
@@ -32,4 +33,16 @@ def get_affordability(region_id: int, db: Session = Depends(get_db)):
             detail="Insufficient data to compute affordability"
         )
     return result
+
+
+@router.get("/affordability/rankings")
+def get_affordability_rankings(db: Session = Depends(get_db)):
+    rankings = affordability_rankings(db)
+    if not rankings:
+        raise HTTPException(
+            status_code=404,
+            detail="No affordability data available"
+        )
+    return rankings
+
 
