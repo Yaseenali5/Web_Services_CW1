@@ -23,6 +23,15 @@ The system is structured using a separation-of-concerns approach:
 
 ## Setup Instructions
 
+
 ```bash
 pip3 install -r requirements.txt
 python3 -m uvicorn app.main:app --reload
+
+
+## API Documentation
+
+The full API specification and endpoint documentation is provided in: **api_documentation.pdf**
+
+Interactive documentation is also available locally via:
+http://127.0.0.1:8000/docs
