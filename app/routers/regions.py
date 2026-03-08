@@ -20,6 +20,13 @@ def read_region(region_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Region not found")
     return region
 
+@router.put("/{region_id}", response_model=schemas.Region)
+def update_region(region_id: int, region: schemas.RegionUpdate, db: Session = Depends(get_db)):
+    updated_region = crud.update_region(db, region_id, region)
+    if not updated_region:
+        raise HTTPException(status_code=404, detail="Region not found")
+    return updated_region
+
 @router.delete("/{region_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_region(region_id: int, db: Session = Depends(get_db)):
     region = crud.delete_region(db, region_id)

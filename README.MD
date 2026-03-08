@@ -1,37 +1,94 @@
 # Housing Market & Rental Insights API
-A data-driven web API that provides analytical insights into housing affordability and rental markets using regional income and rental data
 
-## Features
-- CRUD operations for regions and housing listings
-- Median rent analytics per region
-- Affordability index combining rent and income data
-- Comparative affordability rankings across regions
-- RESTful API with OpenAPI Swagger documentation
+A FastAPI + SQLite project for storing housing data and computing affordability analytics.
 
-## Technologies stack
-- Python 3
+## Tech Stack
+
+- Python
 - FastAPI
 - SQLAlchemy
 - SQLite
 - Pydantic
 
-## Architecture
-The system is structured using a separation-of-concerns approach:
-- Database models define persistent data
-- CRUD and analytics logic are decoupled from routing
-- API routers expose functionality via RESTful endpoints
-
-## Setup Instructions
-
+## Run Locally
 
 ```bash
-pip3 install -r requirements.txt
-python3 -m uvicorn app.main:app --reload
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
+Open:
 
-## API Documentation
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
-The full API specification and endpoint documentation is provided in: **api_documentation.pdf**
+## Project Structure
 
-Interactive documentation is also available locally via:
-http://127.0.0.1:8000/docs
+```text
+app/
+  main.py
+  models.py
+  schemas.py
+  database.py
+  crud.py
+  analytics.py
+  routers/
+    regions.py
+    listings.py
+    analytics.py
+```
+
+## API Endpoints
+
+### Regions
+
+- `POST /regions/` Create region
+- `GET /regions/` List regions
+- `GET /regions/{region_id}` Get one region
+- `PUT /regions/{region_id}` Update region
+- `DELETE /regions/{region_id}` Delete region
+
+### Listings
+
+- `POST /listings/` Create listing
+- `GET /listings/` List listings
+- `GET /listings/{listing_id}` Get one listing
+- `PUT /listings/{listing_id}` Update listing
+- `DELETE /listings/{listing_id}` Delete listing
+
+### Analytics
+
+- `GET /analytics/` Analytics root message
+- `GET /analytics/regions/{region_id}/median-rent` Median monthly rent for region
+- `GET /analytics/regions/{region_id}/affordability` Affordability index and class
+- `GET /analytics/affordability/rankings` Cross-region affordability ranking
+
+## Example Payloads
+
+### Create Region
+
+```json
+{
+  "name": "Leeds",
+  "ons_code": "E08000035",
+  "average_income": 29500
+}
+```
+
+### Create Listing
+
+```json
+{
+  "region_id": 1,
+  "price": 950,
+  "bedrooms": 2,
+  "listing_type": "rent"
+}
+```
+
+## Notes
+
+- Database file: `housing.db`
+- API currently runs with local SQLite storage.

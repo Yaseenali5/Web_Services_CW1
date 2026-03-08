@@ -9,6 +9,9 @@ class RegionBase(BaseModel):
 class RegionCreate(RegionBase):
     pass
 
+class RegionUpdate(RegionBase):
+    pass
+
 
 class Region(RegionBase):
     id: int
@@ -25,6 +28,9 @@ class ListingBase(BaseModel):
 
 
 class ListingCreate(ListingBase):
+    pass
+
+class ListingUpdate(ListingBase):
     pass
 
 

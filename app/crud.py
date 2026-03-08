@@ -25,6 +25,19 @@ def delete_region(db: Session, region_id: int):
         db.commit()
     return region
 
+def update_region(db: Session, region_id: int, region_data: schemas.RegionUpdate):
+    region = get_region(db, region_id)
+    if not region:
+        return None
+
+    region.name = region_data.name
+    region.ons_code = region_data.ons_code
+    region.average_income = region_data.average_income
+
+    db.commit()
+    db.refresh(region)
+    return region
+
 def create_listing(db: Session, listing: schemas.ListingCreate):
     db_listing = models.Listing(
         region_id=listing.region_id,
@@ -48,4 +61,18 @@ def delete_listing(db: Session, listing_id: int):
     if listing:
         db.delete(listing)
         db.commit()
+    return listing
+
+def update_listing(db: Session, listing_id: int, listing_data: schemas.ListingUpdate):
+    listing = get_listing(db, listing_id)
+    if not listing:
+        return None
+
+    listing.region_id = listing_data.region_id
+    listing.price = listing_data.price
+    listing.bedrooms = listing_data.bedrooms
+    listing.listing_type = listing_data.listing_type
+
+    db.commit()
+    db.refresh(listing)
     return listing
