@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .. import crud, schemas
@@ -15,8 +16,22 @@ def create_region(region: schemas.RegionCreate, db: Session = Depends(get_db), _
         raise HTTPException(status_code=409, detail="Region with same name or ONS code already exists")
 
 @router.get("/", response_model=list[schemas.Region])
-def read_regions(db: Session = Depends(get_db)):
-    return crud.get_regions(db)
+def read_regions(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    name_contains: Optional[str] = None,
+    sort_by: str = Query(default="id", pattern="^(id|name|average_income)$"),
+    sort_order: str = Query(default="asc", pattern="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+):
+    return crud.get_regions(
+        db=db,
+        skip=skip,
+        limit=limit,
+        name_contains=name_contains,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
 
 @router.get("/{region_id}", response_model=schemas.Region)
 def read_region(region_id: int, db: Session = Depends(get_db)):

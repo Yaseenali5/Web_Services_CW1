@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import Optional
 from . import models, schemas
 
 def create_region(db: Session, region: schemas.RegionCreate):
@@ -17,8 +18,31 @@ def create_region(db: Session, region: schemas.RegionCreate):
     db.refresh(db_region)
     return db_region
 
-def get_regions(db: Session):
-    return db.query(models.Region).all()
+def get_regions(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    name_contains: Optional[str] = None,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+):
+    query = db.query(models.Region)
+
+    if name_contains:
+        query = query.filter(models.Region.name.ilike(f"%{name_contains}%"))
+
+    sort_map = {
+        "id": models.Region.id,
+        "name": models.Region.name,
+        "average_income": models.Region.average_income,
+    }
+    sort_column = sort_map.get(sort_by, models.Region.id)
+    if sort_order == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    return query.offset(skip).limit(limit).all()
 
 def get_region(db: Session, region_id: int):
     return db.query(models.Region).filter(models.Region.id == region_id).first()
@@ -67,8 +91,43 @@ def create_listing(db: Session, listing: schemas.ListingCreate):
     db.refresh(db_listing)
     return db_listing
 
-def get_listings(db: Session):
-    return db.query(models.Listing).all()
+def get_listings(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    region_id: Optional[int] = None,
+    listing_type: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    bedrooms: Optional[int] = None,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+):
+    query = db.query(models.Listing)
+
+    if region_id is not None:
+        query = query.filter(models.Listing.region_id == region_id)
+    if listing_type is not None:
+        query = query.filter(models.Listing.listing_type == listing_type)
+    if min_price is not None:
+        query = query.filter(models.Listing.price >= min_price)
+    if max_price is not None:
+        query = query.filter(models.Listing.price <= max_price)
+    if bedrooms is not None:
+        query = query.filter(models.Listing.bedrooms == bedrooms)
+
+    sort_map = {
+        "id": models.Listing.id,
+        "price": models.Listing.price,
+        "bedrooms": models.Listing.bedrooms,
+    }
+    sort_column = sort_map.get(sort_by, models.Listing.id)
+    if sort_order == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    return query.offset(skip).limit(limit).all()
 
 def get_listing(db: Session, listing_id: int):
     return db.query(models.Listing).filter(models.Listing.id == listing_id).first()
