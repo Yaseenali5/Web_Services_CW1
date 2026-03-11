@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from typing import Literal
+from pydantic import BaseModel, Field, ConfigDict
 
 class RegionBase(BaseModel):
-    name: str
-    ons_code: str
-    average_income: float
+    name: str = Field(min_length=1)
+    ons_code: str = Field(min_length=1)
+    average_income: float = Field(gt=0)
 
 
 class RegionCreate(RegionBase):
@@ -16,15 +17,14 @@ class RegionUpdate(RegionBase):
 class Region(RegionBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListingBase(BaseModel):
-    region_id: int
-    price: float
-    bedrooms: int
-    listing_type: str
+    region_id: int = Field(gt=0)
+    price: float = Field(gt=0)
+    bedrooms: int = Field(ge=0)
+    listing_type: Literal["rent", "sale"]
 
 
 class ListingCreate(ListingBase):
@@ -37,5 +37,4 @@ class ListingUpdate(ListingBase):
 class Listing(ListingBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
