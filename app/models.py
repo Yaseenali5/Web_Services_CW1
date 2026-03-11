@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -10,14 +10,14 @@ class Region(Base):
     ons_code = Column(String, unique=True)
     average_income = Column(Float)
 
-    listings = relationship("Listing", back_populates="region")
+    listings = relationship("Listing", back_populates="region", passive_deletes=True)
 
 
 class Listing(Base):
     __tablename__ = "listings"
 
     id = Column(Integer, primary_key=True, index=True)
-    region_id = Column(Integer, ForeignKey("regions.id"))
+    region_id = Column(Integer, ForeignKey("regions.id", ondelete="RESTRICT"), nullable=False)
     price = Column(Float)
     bedrooms = Column(Integer)
     listing_type = Column(String)  # rent or sale

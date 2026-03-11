@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from . import models, schemas
 
 def create_region(db: Session, region: schemas.RegionCreate):
@@ -8,7 +9,11 @@ def create_region(db: Session, region: schemas.RegionCreate):
         average_income=region.average_income
     )
     db.add(db_region)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
     db.refresh(db_region)
     return db_region
 
@@ -22,7 +27,11 @@ def delete_region(db: Session, region_id: int):
     region = get_region(db, region_id)
     if region:
         db.delete(region)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise
     return region
 
 def update_region(db: Session, region_id: int, region_data: schemas.RegionUpdate):
@@ -34,7 +43,11 @@ def update_region(db: Session, region_id: int, region_data: schemas.RegionUpdate
     region.ons_code = region_data.ons_code
     region.average_income = region_data.average_income
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
     db.refresh(region)
     return region
 
@@ -46,7 +59,11 @@ def create_listing(db: Session, listing: schemas.ListingCreate):
         listing_type=listing.listing_type
     )
     db.add(db_listing)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
     db.refresh(db_listing)
     return db_listing
 
@@ -60,7 +77,11 @@ def delete_listing(db: Session, listing_id: int):
     listing = get_listing(db, listing_id)
     if listing:
         db.delete(listing)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            raise
     return listing
 
 def update_listing(db: Session, listing_id: int, listing_data: schemas.ListingUpdate):
@@ -73,6 +94,10 @@ def update_listing(db: Session, listing_id: int, listing_data: schemas.ListingUp
     listing.bedrooms = listing_data.bedrooms
     listing.listing_type = listing_data.listing_type
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
     db.refresh(listing)
     return listing
