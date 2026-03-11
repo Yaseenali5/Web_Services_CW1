@@ -30,6 +30,12 @@ Open:
 python3 -m unittest discover -s tests -v
 ```
 
+## Import Sample Data
+
+```bash
+python3 scripts/import_data.py --regions data/sample_regions.csv --listings data/sample_listings.csv
+```
+
 ## Project Structure
 
 ```text
