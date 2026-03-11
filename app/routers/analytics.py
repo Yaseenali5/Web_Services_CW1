@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..analytics import median_rent_for_region
 from ..analytics import affordability_for_region
 from ..analytics import affordability_rankings
+from ..analytics import affordability_simulation_for_region
 router = APIRouter()
 
 @router.get("/")
@@ -35,6 +37,31 @@ def get_affordability(region_id: int, db: Session = Depends(get_db)):
     return result
 
 
+@router.get("/regions/{region_id}/affordability/simulate")
+def simulate_affordability(
+    region_id: int,
+    monthly_rent: Optional[float] = Query(default=None, gt=0),
+    average_income: Optional[float] = Query(default=None, gt=0),
+    rent_change_pct: float = Query(default=0.0, ge=-100, le=1000),
+    income_change_pct: float = Query(default=0.0, ge=-100, le=1000),
+    db: Session = Depends(get_db),
+):
+    result = affordability_simulation_for_region(
+        db=db,
+        region_id=region_id,
+        monthly_rent=monthly_rent,
+        average_income=average_income,
+        rent_change_pct=rent_change_pct,
+        income_change_pct=income_change_pct,
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Insufficient data to compute affordability simulation",
+        )
+    return result
+
+
 @router.get("/affordability/rankings")
 def get_affordability_rankings(db: Session = Depends(get_db)):
     rankings = affordability_rankings(db)
@@ -44,5 +71,4 @@ def get_affordability_rankings(db: Session = Depends(get_db)):
             detail="No affordability data available"
         )
     return rankings
-
 
