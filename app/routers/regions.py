@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .. import crud, schemas
 from ..database import get_db
+from ..security import require_api_key
 
 router = APIRouter()
 
 @router.post("/", response_model=schemas.Region, status_code=status.HTTP_201_CREATED)
-def create_region(region: schemas.RegionCreate, db: Session = Depends(get_db)):
+def create_region(region: schemas.RegionCreate, db: Session = Depends(get_db), _: str = Depends(require_api_key)):
     try:
         return crud.create_region(db, region)
     except IntegrityError:
@@ -25,7 +26,7 @@ def read_region(region_id: int, db: Session = Depends(get_db)):
     return region
 
 @router.put("/{region_id}", response_model=schemas.Region)
-def update_region(region_id: int, region: schemas.RegionUpdate, db: Session = Depends(get_db)):
+def update_region(region_id: int, region: schemas.RegionUpdate, db: Session = Depends(get_db), _: str = Depends(require_api_key)):
     try:
         updated_region = crud.update_region(db, region_id, region)
         if not updated_region:
@@ -35,7 +36,7 @@ def update_region(region_id: int, region: schemas.RegionUpdate, db: Session = De
         raise HTTPException(status_code=409, detail="Region with same name or ONS code already exists")
 
 @router.delete("/{region_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_region(region_id: int, db: Session = Depends(get_db)):
+def delete_region(region_id: int, db: Session = Depends(get_db), _: str = Depends(require_api_key)):
     try:
         region = crud.delete_region(db, region_id)
         if not region:
