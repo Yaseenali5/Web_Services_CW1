@@ -18,7 +18,7 @@ app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(_request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -31,7 +31,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=422,
         content={

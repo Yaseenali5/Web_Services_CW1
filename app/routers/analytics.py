@@ -1,6 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from .. import schemas
 from ..database import get_db
 from ..analytics import median_rent_for_region
 from ..analytics import affordability_for_region
@@ -8,11 +9,11 @@ from ..analytics import affordability_rankings
 from ..analytics import affordability_simulation_for_region
 router = APIRouter()
 
-@router.get("/")
+@router.get("/", response_model=schemas.AnalyticsRootResponse)
 def analytics_root():
     return {"message": "Analytics endpoints"}
 
-@router.get("/regions/{region_id}/median-rent")
+@router.get("/regions/{region_id}/median-rent", response_model=schemas.MedianRentResponse)
 def get_median_rent(region_id: int, db: Session = Depends(get_db)):
     median = median_rent_for_region(db, region_id)
     if median is None:
@@ -26,7 +27,7 @@ def get_median_rent(region_id: int, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/regions/{region_id}/affordability")
+@router.get("/regions/{region_id}/affordability", response_model=schemas.AffordabilityResult)
 def get_affordability(region_id: int, db: Session = Depends(get_db)):
     result = affordability_for_region(db, region_id)
     if result is None:
@@ -37,7 +38,7 @@ def get_affordability(region_id: int, db: Session = Depends(get_db)):
     return result
 
 
-@router.get("/regions/{region_id}/affordability/simulate")
+@router.get("/regions/{region_id}/affordability/simulate", response_model=schemas.AffordabilitySimulationResponse)
 def simulate_affordability(
     region_id: int,
     monthly_rent: Optional[float] = Query(default=None, gt=0),
@@ -62,7 +63,7 @@ def simulate_affordability(
     return result
 
 
-@router.get("/affordability/rankings")
+@router.get("/affordability/rankings", response_model=list[schemas.AffordabilityResult])
 def get_affordability_rankings(db: Session = Depends(get_db)):
     rankings = affordability_rankings(db)
     if not rankings:
@@ -71,4 +72,3 @@ def get_affordability_rankings(db: Session = Depends(get_db)):
             detail="No affordability data available"
         )
     return rankings
-
