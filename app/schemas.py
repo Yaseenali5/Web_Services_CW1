@@ -78,3 +78,21 @@ class AffordabilitySimulationResponse(BaseModel):
     baseline: SimulationSnapshot
     scenario: SimulationSnapshot
     delta: SimulationDelta
+
+
+class PriceTrendPoint(BaseModel):
+    bedrooms: int
+    listing_count: int
+    avg_price: float
+    min_price: float
+    max_price: float
+
+
+class PriceTrendResponse(BaseModel):
+    region: str
+    listing_type_filter: Optional[str] = None
+    total_listings: int
+    overall_avg_price: float
+    overall_min_price: float
+    overall_max_price: float
+    by_bedrooms: list[PriceTrendPoint]

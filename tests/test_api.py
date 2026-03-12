@@ -117,6 +117,45 @@ class APITestCase(unittest.TestCase):
         self.assertIn("scenario", payload)
         self.assertIn("delta", payload)
 
+    def test_price_trend_endpoint(self):
+        self.client.post(
+            "/regions/",
+            headers=self.auth,
+            json={"name": "Leeds", "ons_code": "E08000035", "average_income": 30000},
+        )
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 1, "price": 800, "bedrooms": 2, "listing_type": "rent"},
+        )
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 1, "price": 1000, "bedrooms": 2, "listing_type": "rent"},
+        )
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 1, "price": 1200, "bedrooms": 3, "listing_type": "sale"},
+        )
+
+        response = self.client.get("/analytics/regions/1/price-trend")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["region"], "Leeds")
+        self.assertEqual(payload["total_listings"], 3)
+        self.assertEqual(len(payload["by_bedrooms"]), 2)
+
+        response = self.client.get("/analytics/regions/1/price-trend?listing_type=rent")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["listing_type_filter"], "rent")
+        self.assertEqual(payload["total_listings"], 2)
+        self.assertEqual(payload["overall_avg_price"], 900.0)
+
+        response = self.client.get("/analytics/regions/999/price-trend")
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

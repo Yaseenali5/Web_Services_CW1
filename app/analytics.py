@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from . import models
 from .models import Region
 from typing import Optional
@@ -122,3 +123,54 @@ def affordability_rankings(db: Session):
     rankings.sort(key=lambda x: x["affordability_index"])
     return rankings
 
+
+def price_trend_for_region(
+    db: Session,
+    region_id: int,
+    listing_type: Optional[str] = None,
+):
+    region = db.query(Region).filter(Region.id == region_id).first()
+    if not region:
+        return None
+
+    base_query = db.query(models.Listing).filter(models.Listing.region_id == region_id)
+    if listing_type is not None:
+        base_query = base_query.filter(models.Listing.listing_type == listing_type)
+
+    listings = base_query.all()
+    if not listings:
+        return None
+
+    grouped = (
+        db.query(
+            models.Listing.bedrooms.label("bedrooms"),
+            func.count(models.Listing.id).label("listing_count"),
+            func.avg(models.Listing.price).label("avg_price"),
+            func.min(models.Listing.price).label("min_price"),
+            func.max(models.Listing.price).label("max_price"),
+        )
+        .filter(models.Listing.region_id == region_id)
+    )
+    if listing_type is not None:
+        grouped = grouped.filter(models.Listing.listing_type == listing_type)
+    grouped = grouped.group_by(models.Listing.bedrooms).order_by(models.Listing.bedrooms.asc()).all()
+
+    prices = [item.price for item in listings]
+    return {
+        "region": region.name,
+        "listing_type_filter": listing_type,
+        "total_listings": len(listings),
+        "overall_avg_price": round(sum(prices) / len(prices), 2),
+        "overall_min_price": round(min(prices), 2),
+        "overall_max_price": round(max(prices), 2),
+        "by_bedrooms": [
+            {
+                "bedrooms": int(row.bedrooms),
+                "listing_count": int(row.listing_count),
+                "avg_price": round(float(row.avg_price), 2),
+                "min_price": round(float(row.min_price), 2),
+                "max_price": round(float(row.max_price), 2),
+            }
+            for row in grouped
+        ],
+    }

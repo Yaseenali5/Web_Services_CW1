@@ -7,6 +7,7 @@ from ..analytics import median_rent_for_region
 from ..analytics import affordability_for_region
 from ..analytics import affordability_rankings
 from ..analytics import affordability_simulation_for_region
+from ..analytics import price_trend_for_region
 router = APIRouter()
 
 @router.get("/", response_model=schemas.AnalyticsRootResponse)
@@ -59,6 +60,21 @@ def simulate_affordability(
         raise HTTPException(
             status_code=404,
             detail="Insufficient data to compute affordability simulation",
+        )
+    return result
+
+
+@router.get("/regions/{region_id}/price-trend", response_model=schemas.PriceTrendResponse)
+def get_price_trend(
+    region_id: int,
+    listing_type: Optional[str] = Query(default=None, pattern="^(rent|sale)$"),
+    db: Session = Depends(get_db),
+):
+    result = price_trend_for_region(db=db, region_id=region_id, listing_type=listing_type)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No listing data available for price trend analysis",
         )
     return result
 
