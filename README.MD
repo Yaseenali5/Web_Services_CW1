@@ -33,8 +33,29 @@ python3 -m unittest discover -s tests -v
 ## Import Sample Data
 
 ```bash
-python3 scripts/import_data.py --regions data/sample_regions.csv --listings data/sample_listings.csv
+python3 scripts/import_data.py --regions data/sample_regions.csv --listings data/sample_listings.csv --manifest data/ingestion_manifest.json
 ```
+
+## Authentication
+
+- Get bearer token (demo credentials):
+```bash
+curl -X POST http://127.0.0.1:8000/auth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=adminpass"
+```
+- Use token for write requests:
+```bash
+curl -X POST http://127.0.0.1:8000/regions/ \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Leeds","ons_code":"E08000035","average_income":29500}'
+```
+
+## Documentation
+
+- Markdown API documentation: `API_DOCUMENTATION.md`
+- Submission-ready API documentation PDF: `API_DOCUMENTATION.pdf`
 
 ## Project Structure
 

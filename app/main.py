@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from .database import Base, engine
-from .routers import listings, regions, analytics
+from .routers import listings, regions, analytics, auth
 
 Base.metadata.create_all(bind=engine)
 
@@ -15,6 +15,7 @@ app = FastAPI(
 app.include_router(regions.router, prefix="/regions", tags=["Regions"])
 app.include_router(listings.router, prefix="/listings", tags=["Listings"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 
 @app.exception_handler(HTTPException)

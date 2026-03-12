@@ -1,5 +1,8 @@
 import argparse
 import csv
+import hashlib
+import json
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Dict
 
@@ -119,16 +122,64 @@ def import_listings_csv(path: str) -> ImportStats:
         db.close()
 
 
+def _file_sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def update_manifest(
+    manifest_path: str,
+    regions_path: str,
+    regions_stats: ImportStats,
+    listings_path: str,
+    listings_stats: ImportStats,
+):
+    timestamp = datetime.now(timezone.utc).isoformat()
+    manifest = {
+        "generated_at_utc": timestamp,
+        "sources": {
+            "regions_csv": {
+                "path": regions_path,
+                "sha256": _file_sha256(regions_path),
+                "stats": regions_stats.__dict__,
+            },
+            "listings_csv": {
+                "path": listings_path,
+                "sha256": _file_sha256(listings_path),
+                "stats": listings_stats.__dict__,
+            },
+        },
+    }
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Import regions and listings from CSV files into SQLite."
     )
     parser.add_argument("--regions", required=True, help="Path to regions CSV")
     parser.add_argument("--listings", required=True, help="Path to listings CSV")
+    parser.add_argument(
+        "--manifest",
+        default="data/ingestion_manifest.json",
+        help="Path to ingestion metadata manifest JSON",
+    )
     args = parser.parse_args()
 
     region_stats = import_regions_csv(args.regions)
     listing_stats = import_listings_csv(args.listings)
+    update_manifest(
+        manifest_path=args.manifest,
+        regions_path=args.regions,
+        regions_stats=region_stats,
+        listings_path=args.listings,
+        listings_stats=listing_stats,
+    )
 
     print(
         "Regions: "
@@ -138,6 +189,7 @@ def main():
         "Listings: "
         f"created={listing_stats.created}, updated={listing_stats.updated}, skipped={listing_stats.skipped}"
     )
+    print(f"Manifest: written to {args.manifest}")
 
 
 if __name__ == "__main__":

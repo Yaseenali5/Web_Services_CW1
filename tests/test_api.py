@@ -12,9 +12,17 @@ class APITestCase(unittest.TestCase):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         self.client = TestClient(app)
-        self.auth = {"X-API-Key": "dev-api-key"}
+        self.auth = {"Authorization": f"Bearer {self._issue_token('admin', 'adminpass')}"}
 
-    def test_write_endpoints_require_api_key(self):
+    def _issue_token(self, username: str, password: str) -> str:
+        response = self.client.post(
+            "/auth/token",
+            data={"username": username, "password": password},
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.json()["access_token"]
+
+    def test_write_endpoints_require_bearer_token(self):
         response = self.client.post(
             "/regions/",
             json={"name": "Leeds", "ons_code": "E08000035", "average_income": 29500},
@@ -23,6 +31,17 @@ class APITestCase(unittest.TestCase):
         payload = response.json()
         self.assertIn("error", payload)
         self.assertEqual(payload["error"]["code"], 401)
+
+    def test_viewer_scope_cannot_write(self):
+        viewer_token = self._issue_token("viewer", "viewerpass")
+        response = self.client.post(
+            "/regions/",
+            headers={"Authorization": f"Bearer {viewer_token}"},
+            json={"name": "Leeds", "ons_code": "E08000035", "average_income": 29500},
+        )
+        self.assertEqual(response.status_code, 403)
+        payload = response.json()
+        self.assertEqual(payload["error"]["code"], 403)
 
     def test_validation_errors_use_standard_shape(self):
         response = self.client.post(

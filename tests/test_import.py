@@ -1,11 +1,12 @@
 import csv
+import json
 import os
 import tempfile
 import unittest
 
 from app.database import SessionLocal, engine
 from app.models import Base, Region, Listing
-from scripts.import_data import import_regions_csv, import_listings_csv
+from scripts.import_data import import_regions_csv, import_listings_csv, update_manifest
 
 
 class ImportPipelineTestCase(unittest.TestCase):
@@ -92,6 +93,44 @@ class ImportPipelineTestCase(unittest.TestCase):
             self.assertTrue(all(item.listing_type in {"rent", "sale"} for item in listings))
         finally:
             db.close()
+
+    def test_manifest_written_with_checksums_and_stats(self):
+        regions_path = self._write_csv(
+            ["name", "ons_code", "average_income"],
+            [
+                ["Leeds", "E08000035", "29500"],
+            ],
+        )
+        listings_path = self._write_csv(
+            ["region_ons_code", "price", "bedrooms", "listing_type"],
+            [
+                ["E08000035", "800", "2", "rent"],
+            ],
+        )
+
+        region_stats = import_regions_csv(regions_path)
+        listing_stats = import_listings_csv(listings_path)
+
+        fd, manifest_path = tempfile.mkstemp(suffix=".json")
+        os.close(fd)
+        update_manifest(
+            manifest_path=manifest_path,
+            regions_path=regions_path,
+            regions_stats=region_stats,
+            listings_path=listings_path,
+            listings_stats=listing_stats,
+        )
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        self.assertIn("generated_at_utc", payload)
+        self.assertIn("sources", payload)
+        self.assertIn("regions_csv", payload["sources"])
+        self.assertIn("listings_csv", payload["sources"])
+        self.assertIn("sha256", payload["sources"]["regions_csv"])
+        self.assertEqual(payload["sources"]["regions_csv"]["stats"]["created"], 1)
+        self.assertEqual(payload["sources"]["listings_csv"]["stats"]["created"], 1)
 
 
 if __name__ == "__main__":
