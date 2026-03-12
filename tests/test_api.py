@@ -175,6 +175,56 @@ class APITestCase(unittest.TestCase):
         response = self.client.get("/analytics/regions/999/price-trend")
         self.assertEqual(response.status_code, 404)
 
+    def test_risk_score_endpoint_and_rankings_order(self):
+        self.client.post(
+            "/regions/",
+            headers=self.auth,
+            json={"name": "Leeds", "ons_code": "E08000035", "average_income": 30000},
+        )
+        self.client.post(
+            "/regions/",
+            headers=self.auth,
+            json={"name": "Manchester", "ons_code": "E08000003", "average_income": 50000},
+        )
+
+        # Leeds: higher burden
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 1, "price": 1400, "bedrooms": 2, "listing_type": "rent"},
+        )
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 1, "price": 1500, "bedrooms": 3, "listing_type": "rent"},
+        )
+        # Manchester: lower burden
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 2, "price": 900, "bedrooms": 2, "listing_type": "rent"},
+        )
+        self.client.post(
+            "/listings/",
+            headers=self.auth,
+            json={"region_id": 2, "price": 950, "bedrooms": 3, "listing_type": "rent"},
+        )
+
+        response = self.client.get("/analytics/regions/1/risk-score")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("risk_score", payload)
+        self.assertIn("risk_band", payload)
+        self.assertGreaterEqual(payload["risk_score"], 0)
+        self.assertLessEqual(payload["risk_score"], 100)
+
+        response = self.client.get("/analytics/affordability/rankings")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 2)
+        # Manchester should be ranked as more affordable than Leeds in this controlled setup.
+        self.assertEqual(data[0]["region"], "Manchester")
+
 
 if __name__ == "__main__":
     unittest.main()

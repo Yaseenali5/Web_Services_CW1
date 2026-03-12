@@ -112,12 +112,40 @@ def affordability_simulation_for_region(
 
 def affordability_rankings(db: Session):
     regions = db.query(models.Region).all()
+    rent_rows = (
+        db.query(models.Listing.region_id, models.Listing.price)
+        .filter(models.Listing.listing_type == "rent")
+        .all()
+    )
+    prices_by_region: dict[int, list[float]] = {}
+    for region_id, price in rent_rows:
+        prices_by_region.setdefault(region_id, []).append(float(price))
+
     rankings = []
 
     for region in regions:
-        result = affordability_for_region(db, region.id)
-        if result:
-            rankings.append(result)
+        prices = prices_by_region.get(region.id, [])
+        if not prices or not region.average_income:
+            continue
+        prices.sort()
+        n = len(prices)
+        if n % 2 == 1:
+            median_monthly = prices[n // 2]
+        else:
+            median_monthly = (prices[n // 2 - 1] + prices[n // 2]) / 2
+
+        annual_rent = median_monthly * 12
+        affordability_index = annual_rent / region.average_income
+        rankings.append(
+            {
+                "region": region.name,
+                "median_monthly_rent": round(median_monthly, 2),
+                "median_annual_rent": round(annual_rent, 2),
+                "average_income": round(region.average_income, 2),
+                "affordability_index": round(affordability_index, 2),
+                "classification": _classify_affordability(affordability_index),
+            }
+        )
 
     # sort by affordability_index (lower = more affordable)
     rankings.sort(key=lambda x: x["affordability_index"])
@@ -173,4 +201,64 @@ def price_trend_for_region(
             }
             for row in grouped
         ],
+    }
+
+
+def risk_score_for_region(db: Session, region_id: int):
+    region = db.query(Region).filter(Region.id == region_id).first()
+    if not region or not region.average_income:
+        return None
+
+    rent_prices = [
+        float(row[0])
+        for row in db.query(models.Listing.price)
+        .filter(models.Listing.region_id == region_id, models.Listing.listing_type == "rent")
+        .all()
+    ]
+    if not rent_prices:
+        return None
+
+    rent_prices.sort()
+    n = len(rent_prices)
+    if n % 2 == 1:
+        median_rent = rent_prices[n // 2]
+    else:
+        median_rent = (rent_prices[n // 2 - 1] + rent_prices[n // 2]) / 2
+
+    affordability_index = (median_rent * 12) / region.average_income
+
+    mean_price = sum(rent_prices) / len(rent_prices)
+    variance = sum((p - mean_price) ** 2 for p in rent_prices) / len(rent_prices)
+    stdev = variance ** 0.5
+    coefficient_variation = (stdev / mean_price) if mean_price > 0 else 0.0
+
+    # Weighted risk model:
+    # - affordability pressure (0-60)
+    # - rent volatility (0-25)
+    # - absolute median rent level (0-15)
+    affordability_component = min(affordability_index / 0.60, 1.0) * 60
+    volatility_component = min(coefficient_variation / 0.50, 1.0) * 25
+    price_level_component = min(median_rent / 2000.0, 1.0) * 15
+    risk_score = round(affordability_component + volatility_component + price_level_component, 2)
+
+    if risk_score < 35:
+        risk_band = "Low"
+    elif risk_score < 65:
+        risk_band = "Medium"
+    else:
+        risk_band = "High"
+
+    return {
+        "region": region.name,
+        "risk_score": risk_score,
+        "risk_band": risk_band,
+        "affordability_index": round(affordability_index, 2),
+        "median_monthly_rent": round(median_rent, 2),
+        "sample_size": len(rent_prices),
+        "factors": {
+            "affordability_component": round(affordability_component, 2),
+            "volatility_component": round(volatility_component, 2),
+            "price_level_component": round(price_level_component, 2),
+            "coefficient_of_variation": round(coefficient_variation, 4),
+        },
     }

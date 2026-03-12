@@ -96,3 +96,20 @@ class PriceTrendResponse(BaseModel):
     overall_min_price: float
     overall_max_price: float
     by_bedrooms: list[PriceTrendPoint]
+
+
+class RiskFactors(BaseModel):
+    affordability_component: float
+    volatility_component: float
+    price_level_component: float
+    coefficient_of_variation: float
+
+
+class RiskScoreResponse(BaseModel):
+    region: str
+    risk_score: float
+    risk_band: str
+    affordability_index: float
+    median_monthly_rent: float
+    sample_size: int
+    factors: RiskFactors

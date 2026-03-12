@@ -8,6 +8,7 @@ from ..analytics import affordability_for_region
 from ..analytics import affordability_rankings
 from ..analytics import affordability_simulation_for_region
 from ..analytics import price_trend_for_region
+from ..analytics import risk_score_for_region
 router = APIRouter()
 
 @router.get("/", response_model=schemas.AnalyticsRootResponse)
@@ -75,6 +76,17 @@ def get_price_trend(
         raise HTTPException(
             status_code=404,
             detail="No listing data available for price trend analysis",
+        )
+    return result
+
+
+@router.get("/regions/{region_id}/risk-score", response_model=schemas.RiskScoreResponse)
+def get_risk_score(region_id: int, db: Session = Depends(get_db)):
+    result = risk_score_for_region(db=db, region_id=region_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Insufficient data to compute risk score",
         )
     return result
 
