@@ -36,6 +36,26 @@ python3 -m unittest discover -s tests -v
 python3 scripts/import_data.py --regions data/sample_regions.csv --listings data/sample_listings.csv --manifest data/ingestion_manifest.json
 ```
 
+## Prepare External Dataset
+
+```bash
+python3 scripts/prepare_external_dataset.py \
+  --source-csv path/to/external_housing_data.csv \
+  --out-regions data/prepared_regions.csv \
+  --out-listings data/prepared_listings.csv
+```
+
+Then import:
+```bash
+python3 scripts/import_data.py --regions data/prepared_regions.csv --listings data/prepared_listings.csv --manifest data/ingestion_manifest.json
+```
+
+## Benchmark Key Endpoints
+
+```bash
+python3 scripts/benchmark_api.py --iterations 50
+```
+
 ## Authentication
 
 - Get bearer token (demo credentials):
