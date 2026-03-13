@@ -58,6 +58,8 @@ python3 scripts/benchmark_api.py --iterations 50
 
 ## Authentication
 
+Write operations (POST, PUT, DELETE) require a Bearer token with the write scope.
+
 - Get bearer token (demo credentials):
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/token \
@@ -117,6 +119,10 @@ app/
 - `GET /analytics/regions/{region_id}/median-rent` Median monthly rent for region
 - `GET /analytics/regions/{region_id}/affordability` Affordability index and class
 - `GET /analytics/affordability/rankings` Cross-region affordability ranking
+- `GET /analytics/regions/{region_id}/affordability/simulate
+- `GET /analytics/regions/{region_id}/price-trend
+- `GET /analytics/regions/{region_id}/risk-score
+
 
 ## Example Payloads
 
