@@ -1,5 +1,7 @@
 # Housing Market & Rental Insights API
 
+A FastAPI + SQLite project for storing housing data and computing affordability analytics.
+
 ## Quick Start (Fresh Machine)
 
 ```bash
@@ -10,8 +12,6 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 uvicorn app.main:app --reload
-
-A FastAPI + SQLite project for storing housing data and computing affordability analytics.
 
 ## Tech Stack
 
