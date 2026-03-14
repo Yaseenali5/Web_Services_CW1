@@ -119,6 +119,10 @@ app/
 
 ## API Endpoints
 
+### Auth
+
+- `POST /auth/token` Issue bearer token for authenticated write operations
+
 ### Regions
 
 - `POST /regions/` Create region
@@ -141,9 +145,9 @@ app/
 - `GET /analytics/regions/{region_id}/median-rent` Median monthly rent for region
 - `GET /analytics/regions/{region_id}/affordability` Affordability index and class
 - `GET /analytics/affordability/rankings` Cross-region affordability ranking
-- `GET /analytics/regions/{region_id}/affordability/simulate
-- `GET /analytics/regions/{region_id}/price-trend
-- `GET /analytics/regions/{region_id}/risk-score
+- `GET /analytics/regions/{region_id}/affordability/simulate`
+- `GET /analytics/regions/{region_id}/price-trend`
+- `GET /analytics/regions/{region_id}/risk-score`
 
 
 ## Example Payloads
