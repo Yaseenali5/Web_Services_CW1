@@ -38,14 +38,36 @@ python3 scripts/import_data.py --regions data/sample_regions.csv --listings data
 
 ## Prepare External Dataset
 
+Step 1: Discover a public dataset from registry metadata:
+```bash
+cat data/dataset_registry.json
+```
+
+Step 2: Download and explore the dataset structure:
+```bash
+python3 scripts/download_and_explore.py \
+  --dataset-id ons_private_rental_prices \
+  --out data/external/ons_private_rental_prices.csv \
+  --sample-rows 5
+```
+
+Step 3: Normalize to internal schema:
+```bash
+python3 scripts/merge_ons_with_profiles.py \
+  --ons-csv data/external/ons_private_rental_prices.csv \
+  --profiles-csv data/sample_region_profiles.csv \
+  --out-staging data/staging_ons_profiles.csv
+```
+
+Step 4: Normalize merged staging CSV to internal import CSVs:
 ```bash
 python3 scripts/prepare_external_dataset.py \
-  --source-csv path/to/external_housing_data.csv \
+  --source-csv data/staging_ons_profiles.csv \
   --out-regions data/prepared_regions.csv \
   --out-listings data/prepared_listings.csv
 ```
 
-Then import:
+Step 5: Import and generate provenance manifest:
 ```bash
 python3 scripts/import_data.py --regions data/prepared_regions.csv --listings data/prepared_listings.csv --manifest data/ingestion_manifest.json
 ```
