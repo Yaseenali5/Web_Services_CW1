@@ -98,8 +98,8 @@ curl -X POST http://127.0.0.1:8000/regions/ \
 
 ## Documentation
 
-- Markdown API documentation: `API_DOCUMENTATION.md`
-- Submission-ready API documentation PDF: `API_DOCUMENTATION.pdf`
+- Markdown API documentation: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+- Submission-ready API documentation PDF: [API_DOCUMENTATION.pdf](API_DOCUMENTATION.pdf)
 
 ## Project Structure
 
