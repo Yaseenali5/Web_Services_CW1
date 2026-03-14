@@ -12,7 +12,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 uvicorn app.main:app --reload
-
+`````
 ## Tech Stack
 
 - Python
