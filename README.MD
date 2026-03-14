@@ -1,5 +1,16 @@
 # Housing Market & Rental Insights API
 
+## Quick Start (Fresh Machine)
+
+```bash
+git clone https://github.com/Yaseenali5/Web_Services_CW1.git
+cd Web_Services_CW1
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m unittest discover -s tests -v
+uvicorn app.main:app --reload
+
 A FastAPI + SQLite project for storing housing data and computing affordability analytics.
 
 ## Tech Stack
